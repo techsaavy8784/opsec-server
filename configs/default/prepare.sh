@@ -11,7 +11,7 @@ fi
 
 # Update the package list
 sudo apt-get update
-sudo apt install build-essential
+sudo apt install -y build-essential
 sudo apt install --assume-yes curl clang libssl-dev ca-certificates gnupg lsb-release protobuf-compiler
 
 # Check if docker is installed, else install it
