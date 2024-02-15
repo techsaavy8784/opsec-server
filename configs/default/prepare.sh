@@ -11,7 +11,8 @@ fi
 
 # Update the package list
 sudo apt-get update
-sudo apt-get -y install ca-certificates curl gnupg lsb-release
+sudo apt install build-essential
+sudo apt install --assume-yes curl clang libssl-dev ca-certificates gnupg lsb-release protobuf-compiler
 
 # Check if docker is installed, else install it
 if command -v docker &>/dev/null; then
@@ -43,7 +44,6 @@ else
   sudo apt-get -y install git-all
 fi
 
-
 # Check if Python 3 is installed
 if command -v python3 &>/dev/null; then
     echo "Python 3 is already installed."
@@ -71,6 +71,28 @@ else
         echo "Failed to install Python 3."
         exit 1
     fi
+fi
+
+# Check if Rust is installed
+if command -v rustc &>/dev/null && command -v cargo &>/dev/null; then
+  echo "Rust is already installed."
+else
+  echo "Installing Rust..."
+  # Download and install Rust
+  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+
+  # Source the cargo environment script to update the current shell's PATH
+  # Note: This assumes the default installation location for the current user
+  # For other users or global installs, the appropriate profile script must be sourced
+  source "$HOME/.cargo/env"
+
+  # Set default to stable and update toolchains
+  rustup default stable
+  rustup update
+  rustup update nightly
+  rustup target add wasm32-unknown-unknown --toolchain nightly
+
+  echo "Rust installation complete."
 fi
 
 # once installation is complete create a .initialized file in the home directory
