@@ -1,3 +1,4 @@
+#!/bin/bash
 sudo geth \
 --datadir linea_data \
 --port 30393
