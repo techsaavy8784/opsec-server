@@ -123,7 +123,18 @@ async function updateNodeStatus(nodeId, status) {
 async function processNodes() {
   try {
     const sqlQuery = `
-        SELECT nodes.id, nodes.status, nodes.created_at, servers.id AS server_id, servers.host, servers.port, servers.username, servers.password, servers.active, blockchains.id AS blockchain_id, blockchains.name AS blockchain_name
+        SELECT
+          nodes.id,
+          nodes.status,
+          nodes.created_at,
+          servers.id AS server_id,
+          servers.host,
+          servers.port,
+          servers.username,
+          servers.password,
+          servers.active,
+          blockchains.id AS blockchain_id,
+          blockchains.name AS blockchain_name
         FROM nodes
         JOIN servers ON nodes.server_id = servers.id
         JOIN blockchains ON servers.blockchain_id = blockchains.id
