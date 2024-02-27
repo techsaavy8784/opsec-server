@@ -19,3 +19,6 @@ bcrypt.genSalt(saltRounds, function (err, salt) {
     console.log(`Hashed password: ${hash}`)
   })
 })
+
+// $2b$10$6LbEUrJ0IL.D/cdHidW1CemQ24YEotOmq8st0rgn2sCKjUsxh2saS
+// $2b$10$w4u4nUmWW7rFC2eC17Yw.e0ut0ASMBDNYHRKJteS8S/CthsrtyhnO
