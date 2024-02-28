@@ -11,6 +11,7 @@ console.log(path.join(__dirname, "..", ".env"))
 const { Pool } = pkg
 
 const connectionString = process.env.SUPABASE
+console.log("connectionString:", connectionString)
 
 const database = new Pool({
   connectionString,
