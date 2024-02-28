@@ -1,6 +1,12 @@
-import dotenv from "dotenv"
-dotenv.config({ path: "../.env" })
+import { fileURLToPath } from "url"
 import pkg from "pg"
+import database from "../utils/db.js"
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+
+console.log(path.join(__dirname, "..", ".env"))
+
 const { Pool } = pkg
 
 const connectionString = process.env.SUPABASE
