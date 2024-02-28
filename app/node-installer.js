@@ -5,7 +5,6 @@ dotenv.config({ path: path.join(__dirname, "..", ".env") })
 
 import database from "../utils/db.js"
 import ssh from "../utils/ssh.js"
-import path from "path"
 import fs from "fs"
 
 async function processNode(node) {
