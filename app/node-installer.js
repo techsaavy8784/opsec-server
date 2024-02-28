@@ -1,5 +1,6 @@
 import dotenv from "dotenv"
-dotenv.config({ path: "../.env" })
+// dotenv.config({ path: "../.env" })
+dotenv.config({ path: path.join(__dirname, "..", ".env") })
 
 import database from "../utils/db.js"
 import ssh from "../utils/ssh.js"
