@@ -97,6 +97,8 @@ async function processNode(node) {
     console.log("Starting blockchain...")
     await remote.executeCommand(`cd ${blockchainPath} && ./run.sh`, true) // TODO: change to true after testing
 
+    console.log("Started blockchain...")
+
     // update node status
     await updateNodeStatus(node.id, "LIVE")
 
@@ -145,12 +147,12 @@ async function processNodes() {
 
     if (rows.length > 0) {
       console.log(
-        `Found ${rows.length} live node(s). Processing concurrently...`
+        `Found ${rows.length} node reqest(s). Processing concurrently...`
       )
 
       await Promise.all(rows.map((node) => processNode(node)))
     } else {
-      console.log("No live nodes found.")
+      console.log("Waiting for requests...")
     }
   } catch (error) {
     console.error("Error fetching nodes:", error)
@@ -160,10 +162,10 @@ async function processNodes() {
 }
 
 function scheduleCheck() {
-  console.log("Starting node processing...")
   processNodes().then(() => {
     setTimeout(scheduleCheck, 5000)
   })
 }
 
+console.log("Starting node processing...")
 scheduleCheck()
