@@ -1,6 +1,5 @@
 import { fileURLToPath } from "url"
 import pkg from "pg"
-import database from "../utils/db.js"
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
