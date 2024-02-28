@@ -1,11 +1,14 @@
 import dotenv from "dotenv"
-// dotenv.config({ path: "../.env" })
 import path from "path"
-dotenv.config({ path: path.join(__dirname, "..", ".env") })
-
+import { fileURLToPath } from "url"
+import fs from "fs"
 import database from "../utils/db.js"
 import ssh from "../utils/ssh.js"
-import fs from "fs"
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+
+dotenv.config({ path: path.join(__dirname, "..", ".env") })
 
 async function processNode(node) {
   console.log("Processing node:", node.id)
