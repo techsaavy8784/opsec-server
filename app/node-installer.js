@@ -95,7 +95,7 @@ async function processNode(node) {
     console.log("Blockchain installed")
 
     console.log("Starting blockchain...")
-    await remote.executeCommand(`cd ${blockchainPath} && ./run.sh`, false) // TODO: change to true after testing
+    await remote.executeCommand(`cd ${blockchainPath} && ./run.sh`, true) // TODO: change to true after testing
 
     // update node status
     await updateNodeStatus(node.id, "LIVE")
@@ -123,22 +123,22 @@ async function updateNodeStatus(nodeId, status) {
 async function processNodes() {
   try {
     const sqlQuery = `
-        SELECT
-          nodes.id,
-          nodes.status,
-          nodes.created_at,
-          servers.id AS server_id,
-          servers.host,
-          servers.port,
-          servers.username,
-          servers.password,
-          servers.active,
-          blockchains.id AS blockchain_id,
-          blockchains.name AS blockchain_name
-        FROM nodes
-        JOIN servers ON nodes.server_id = servers.id
-        JOIN blockchains ON servers.blockchain_id = blockchains.id
-        WHERE nodes.status = 'CREATED';
+      SELECT
+        nodes.id,
+        nodes.status,
+        nodes.created_at,
+        nodes.server_id,
+        servers.host,
+        servers.port,
+        servers.username,
+        servers.password,
+        servers.active,
+        nodes.blockchain_id,
+        blockchains.name AS blockchain_name
+      FROM nodes
+      JOIN servers ON nodes.server_id = servers.id
+      JOIN blockchains ON nodes.blockchain_id = blockchains.id
+      WHERE nodes.status = 'CREATED';
     `
 
     const { rows } = await database.query(sqlQuery)

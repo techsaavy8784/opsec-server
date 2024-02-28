@@ -162,7 +162,7 @@ class ssh {
     return Promise.resolve()
   }
 
-  disconnect() {
+  async disconnect() {
     this.conn.end()
   }
 }

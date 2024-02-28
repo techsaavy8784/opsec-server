@@ -1,6 +1,6 @@
 import bcrypt from "bcrypt"
 
-const password = "123456789"
+const password = "%F)UsiS)AynL"
 
 const saltRounds = 10 // default
 
@@ -20,5 +20,6 @@ bcrypt.genSalt(saltRounds, function (err, salt) {
   })
 })
 
-// $2b$10$6LbEUrJ0IL.D/cdHidW1CemQ24YEotOmq8st0rgn2sCKjUsxh2saS
-// $2b$10$w4u4nUmWW7rFC2eC17Yw.e0ut0ASMBDNYHRKJteS8S/CthsrtyhnO
+// $2b$10$Likqzj3wID7S9I5kIz67LuVQG4QImXnH72X9RFdUc9NlcJcoJcAvy - kyon
+// $2b$10$UW9ETrREXnTokIE8vMJUuuzZ47S8tMjLRGx3b0B7BjC9jMV8jVrE6 - node guy
+//
