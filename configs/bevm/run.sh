@@ -1,4 +1,5 @@
 #!/bin/bash
+
 cat <<EOF > config.json
 {
   "chain": "testnet",
@@ -26,4 +27,4 @@ sudo docker run -d --restart always --name bevm-node \
   -v $PWD/config.json:/config.json -v $PWD/data:/data \
   -v $PWD/log:/log -v $PWD/keystore:/keystore \
   btclayer2/bevm:testnet-v0.1.4 /usr/local/bin/bevm \
-  --config /config.json
+  --config /config.json "--name=$(cat .wallet)"
