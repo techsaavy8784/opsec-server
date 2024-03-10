@@ -13,14 +13,28 @@ class ssh {
     }
   }
 
-  connect() {
+  connect(timeout = 5000) {
+    // Default timeout set to 5000 milliseconds (5 seconds)
     return new Promise((resolve, reject) => {
+      let isConnectionReady = false
+
+      // Set a timeout to reject the promise if the connection cannot be established within the specified timeframe
+      const connectionTimeout = setTimeout(() => {
+        if (!isConnectionReady) {
+          this.conn.end() // End the connection attempt
+          reject(new Error("SSH connection timeout"))
+        }
+      }, timeout)
+
       this.conn
         .on("ready", () => {
+          clearTimeout(connectionTimeout) // Clear the timeout as the connection is successfully established
+          isConnectionReady = true
           console.log("SSH Client Ready")
           resolve()
         })
         .on("error", (err) => {
+          clearTimeout(connectionTimeout) // Clear the timeout in case of an error
           reject(err)
         })
         .connect(this.config)
@@ -63,8 +77,11 @@ class ssh {
     })
   }
 
-  checkFileExists(filename) {
-    return this.executeCommand(`test -f ${filename} && echo exists || echo no`)
+  checkFileExists(filename, isDirectory = false) {
+    const testFlag = isDirectory ? "-d" : "-f"
+    return this.executeCommand(
+      `test ${testFlag} ${filename} && echo exists || echo no`
+    )
   }
 
   createDirectory(directory) {
@@ -97,6 +114,11 @@ class ssh {
 
   getHomeDirectory() {
     return this.executeCommand("echo $HOME")
+  }
+
+  writeFile(remotePath, text) {
+    const escapedText = text.replace(/'/g, "'\\''")
+    return this.executeCommand(`echo '${escapedText}' > '${remotePath}'`)
   }
 
   scpFile(localPath, remotePath) {

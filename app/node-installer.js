@@ -65,19 +65,31 @@ async function processNode(node) {
 
     // Check if blockchain folder exists
     console.log("Checking if blockchain exists...")
-    const blockchainExists = await remote.checkFileExists(blockchainPath)
+    const blockchainExists = await remote.checkFileExists(blockchainPath, true)
     const blockchainFolderExists = blockchainExists.trim() == "exists"
     console.log("Blockchain exists: ", blockchainFolderExists)
 
     if (blockchainFolderExists) {
-      // TODO: handle error and update db
-      // this should never happen
-      // maybe re-assign a new node to same user?
-
       console.log(
         `Blockchain folder already exists for ${node.blockchain_name}`
       )
-      return
+
+      const dockerContainerName = `${node.blockchain_name.toLocaleLowerCase()}-node`
+
+      // stop the Docker container if it exists
+      console.log(
+        `Stopping Docker container ${dockerContainerName} if it exists...`
+      )
+      await remote.executeCommand(`docker stop ${dockerContainerName}`)
+      console.log(`Docker container ${dockerContainerName} stopped.`)
+
+      // remove the Docker container
+      console.log(`Removing Docker container ${dockerContainerName}...`)
+      await remote.executeCommand(`docker rm ${dockerContainerName}`)
+      console.log(`Docker container ${dockerContainerName} removed.`)
+
+      await remote.deleteDirectory(blockchainPath)
+      console.log("Deleted existing blockchain folder")
     }
 
     // commence node deployment
@@ -99,6 +111,13 @@ async function processNode(node) {
     await remote.executeCommand(`cd ${blockchainPath} && ./install.sh`)
 
     console.log("Blockchain installed")
+
+    // check if blockchain has wallet
+    if (node.blockchain_wallet) {
+      console.log("Blockchain has wallet. Creating wallet...")
+      await remote.writeFile(`${blockchainPath}/.wallet`, node.wallet)
+      console.log("Wallet created")
+    }
 
     console.log("Starting blockchain...")
     await remote.executeCommand(`cd ${blockchainPath} && ./run.sh`, true) // TODO: change to true after testing
@@ -134,6 +153,7 @@ async function processNodes() {
       SELECT
         nodes.id,
         nodes.status,
+        nodes.wallet,
         nodes.created_at,
         nodes.server_id,
         servers.host,
@@ -142,7 +162,8 @@ async function processNodes() {
         servers.password,
         servers.active,
         nodes.blockchain_id,
-        blockchains.name AS blockchain_name
+        blockchains.name AS blockchain_name,
+        blockchains.has_wallet AS blockchain_wallet
       FROM nodes
       JOIN servers ON nodes.server_id = servers.id
       JOIN blockchains ON nodes.blockchain_id = blockchains.id

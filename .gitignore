@@ -41,6 +41,6 @@ yarn.lock
 package-lock.json
 ```
 .vscode/launch.json
-passwords.log
-passwords_error.log
+passwords*
 servers.json
+instances.json
