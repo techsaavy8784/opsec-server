@@ -76,17 +76,25 @@ async function processNode(node) {
 
       const dockerContainerName = `${node.blockchain_name.toLocaleLowerCase()}-node`
 
-      // stop the Docker container if it exists
-      console.log(
-        `Stopping Docker container ${dockerContainerName} if it exists...`
-      )
-      await remote.executeCommand(`docker stop ${dockerContainerName}`)
-      console.log(`Docker container ${dockerContainerName} stopped.`)
+      // Check if the Docker container exists
+      const checkContainerExistsCmd = `docker ps -a -q -f name=^${dockerContainerName}$`
+      const containerId = await remote.executeCommand(checkContainerExistsCmd)
 
-      // remove the Docker container
-      console.log(`Removing Docker container ${dockerContainerName}...`)
-      await remote.executeCommand(`docker rm ${dockerContainerName}`)
-      console.log(`Docker container ${dockerContainerName} removed.`)
+      if (containerId.trim()) {
+        // Stop the Docker container if it exists
+        console.log(`Stopping Docker container ${dockerContainerName}...`)
+        await remote.executeCommand(`docker stop ${dockerContainerName}`)
+        console.log(`Docker container ${dockerContainerName} stopped.`)
+
+        // Remove the Docker container
+        console.log(`Removing Docker container ${dockerContainerName}...`)
+        await remote.executeCommand(`docker rm ${dockerContainerName}`)
+        console.log(`Docker container ${dockerContainerName} removed.`)
+      } else {
+        console.log(
+          `No such container: ${dockerContainerName}, skipping stop and remove.`
+        )
+      }
 
       await remote.deleteDirectory(blockchainPath)
       console.log("Deleted existing blockchain folder")
