@@ -12,6 +12,87 @@ const __dirname = path.dirname(__filename)
 
 dotenv.config({ path: path.join(__dirname, "..", ".env") })
 
+async function stopAndRemoveNonNodeContainers(remote) {
+  console.log("Fetching all Docker containers...")
+
+  // Get all Docker container names
+  const listContainersCmd = `docker ps --format '{{.Names}}'`
+  const allContainerNames = await remote.executeCommand(listContainersCmd)
+
+  // Split the output by new lines to get an array of container names
+  const containerNames = allContainerNames
+    .split("\n")
+    .filter((name) => name.trim() !== "")
+
+  console.log(`Found containers: ${containerNames.join(", ")}`)
+
+  for (const name of containerNames) {
+    // Check if the container name does not include '-node'
+    if (!name.includes("-node")) {
+      console.log(`Stopping and removing container: ${name}`)
+
+      // Stop the Docker container
+      await remote.executeCommand(`docker stop ${name}`)
+      console.log(`Container stopped: ${name}`)
+
+      // Remove the Docker container
+      await remote.executeCommand(`docker rm ${name}`)
+      console.log(`Container removed: ${name}`)
+    }
+  }
+
+  console.log("Processing complete.")
+}
+
+async function deleteBlockchainDirectory(remote, blockchainPath) {
+  try {
+    // Attempt to delete the blockchain directory
+    await remote.deleteDirectory(blockchainPath)
+    console.log("Deleted existing blockchain folder")
+  } catch (error) {
+    console.error(`Failed to delete directory: ${error.message}`)
+
+    // If deletion fails, find Docker containers using the directory
+    const dockerContainerName = await findDockerContainerUsingDirectory(
+      remote,
+      blockchainPath
+    )
+    if (dockerContainerName) {
+      // Stop and remove the Docker container
+      console.log(`Stopping Docker container ${dockerContainerName}...`)
+      await remote.executeCommand(`docker stop ${dockerContainerName}`)
+      console.log(`Stopped Docker container ${dockerContainerName}.`)
+      console.log(`Removing Docker container ${dockerContainerName}...`)
+      await remote.executeCommand(`docker rm ${dockerContainerName}`)
+      console.log(`Removed Docker container ${dockerContainerName}.`)
+
+      // Retry directory deletion
+      try {
+        await remote.deleteDirectory(blockchainPath)
+        console.log(
+          "Successfully deleted the blockchain folder after stopping Docker container."
+        )
+      } catch (retryError) {
+        console.error(
+          `Failed to delete directory after stopping container: ${retryError.message}`
+        )
+      }
+    } else {
+      console.error(
+        "No Docker container found using the directory, or unable to determine."
+      )
+    }
+  }
+}
+
+async function findDockerContainerUsingDirectory(remote, directoryPath) {
+  // This is a placeholder function. Implement the logic to identify the Docker container
+  // using the directory. You might need to adjust this based on actual use case and available information.
+  const checkContainersCmd = `docker ps -qa --filter "volume=${directoryPath}"`
+  const containerId = await remote.executeCommand(checkContainersCmd)
+  return containerId.trim()
+}
+
 async function processNode(node) {
   console.log("Processing node:", node.id)
   console.log("Blockchain:", node.blockchain_name)
@@ -74,6 +155,8 @@ async function processNode(node) {
         `Blockchain folder already exists for ${node.blockchain_name}`
       )
 
+      // await stopAndRemoveNonNodeContainers(remote)
+
       const dockerContainerName = `${node.blockchain_name.toLocaleLowerCase()}-node`
 
       // Check if the Docker container exists
@@ -96,8 +179,10 @@ async function processNode(node) {
         )
       }
 
-      await remote.deleteDirectory(blockchainPath)
-      console.log("Deleted existing blockchain folder")
+      await deleteBlockchainDirectory(remote, blockchainPath)
+
+      // await remote.deleteDirectory(blockchainPath)
+      // console.log("Deleted existing blockchain folder")
     }
 
     // commence node deployment
