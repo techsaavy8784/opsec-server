@@ -83,12 +83,12 @@ async function processNode(node) {
       if (containerId.trim()) {
         // Stop the Docker container if it exists
         console.log(`Stopping Docker container ${dockerContainerName}...`)
-        await remote.executeCommand(`docker stop ${dockerContainerName}`)
+        await remote.executeCommand(`docker stop ${dockerContainerName}`, false)
         console.log(`Docker container ${dockerContainerName} stopped.`)
 
         // Remove the Docker container
         console.log(`Removing Docker container ${dockerContainerName}...`)
-        await remote.executeCommand(`docker rm ${dockerContainerName}`)
+        await remote.executeCommand(`docker rm ${dockerContainerName}`, false)
         console.log(`Docker container ${dockerContainerName} removed.`)
       } else {
         console.log(
