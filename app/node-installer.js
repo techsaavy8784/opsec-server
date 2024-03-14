@@ -49,19 +49,19 @@ async function processNode(node) {
     const initialized = exists.trim() == "exists"
     console.log("Server initialized:", initialized)
 
-    if (!initialized) {
-      console.log("Server not initialized. Preparing...")
-      await remote.scpFile(prepareScript, `${remotePath}/prepare.sh`)
-      console.log("Copied prepare.sh to server")
+    // if (!initialized) {
+    console.log("Server not initialized. Preparing...")
+    await remote.scpFile(prepareScript, `${remotePath}/prepare.sh`)
+    console.log("Copied prepare.sh to server")
 
-      await remote.changePermissions(`${remotePath}/prepare.sh`, "+x")
-      console.log("Changed permissions for prepare.sh")
+    await remote.changePermissions(`${remotePath}/prepare.sh`, "+x")
+    console.log("Changed permissions for prepare.sh")
 
-      console.log("Executing prepare.sh")
-      await remote.executeCommand(`${remotePath}/prepare.sh`)
+    console.log("Executing prepare.sh")
+    await remote.executeCommand(`${remotePath}/prepare.sh`)
 
-      console.log("Server initialized")
-    }
+    console.log("Server initialized")
+    // }
 
     // Check if blockchain folder exists
     console.log("Checking if blockchain exists...")
