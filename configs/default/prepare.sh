@@ -2,12 +2,12 @@
 
 # check if .initialized file exists
 # if the file exists, the prepare.sh script will exit without running
-if [ -f ~/.initialized ]; then
-  echo "Installation has already been completed. Exiting..."
-  exit 0
-else
-  echo "Preparing to initialize server..."
-fi
+# if [ -f ~/.initialized ]; then
+#   echo "Installation has already been completed. Exiting..."
+#   exit 0
+# else
+#   echo "Preparing to initialize server..."
+# fi
 
 # Update the package list
 sudo apt-get update
