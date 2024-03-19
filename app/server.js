@@ -1,4 +1,5 @@
 import dotenv from "dotenv"
+dotenv.config()
 import express from "express"
 import bodyParser from "body-parser"
 import cors from "cors"
@@ -6,7 +7,6 @@ import listenStake from "./web3.js"
 
 const app = express()
 
-dotenv.config()
 // const auditRoute = require('./api/audit');
 
 const port = 9898

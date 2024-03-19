@@ -1,11 +1,12 @@
+import dotenv from "dotenv"
+dotenv.config()
+
 import { http, createPublicClient } from "viem"
-import { mainnet, sepolia } from "viem/chains"
 import abi from "../utils/abi.json" assert { type: "json" }
 
 export const publicClient = createPublicClient({
-  chain: process.env.NODE_ENV === "production" ? mainnet : sepolia,
   cacheTime: 0,
-  transport: http(),
+  transport: http(process.env.RPC_URL),
 })
 
 const BLOCK_INTERVAL = 3
@@ -17,6 +18,8 @@ const listenStake = async () => {
 
   setInterval(async () => {
     const blockNumber = Number(await publicClient.getBlockNumber())
+
+    console.log(`block number: ${blockNumber}`)
 
     if (blockNumber - BLOCK_INTERVAL < lastBlockNumber) {
       console.log(`skipping ${blockNumber}`)
