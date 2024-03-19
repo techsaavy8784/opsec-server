@@ -1,10 +1,12 @@
-require("dotenv").config()
-const express = require("express")
-const app = express()
-const bodyParser = require("body-parser")
-const cors = require("cors")
-const listenStake = require("./web3")
+import dotenv from "dotenv"
+import express from "express"
+import bodyParser from "body-parser"
+import cors from "cors"
+import listenStake from "./web3.js"
 
+const app = express()
+
+dotenv.config()
 // const auditRoute = require('./api/audit');
 
 const port = 9898
@@ -24,7 +26,7 @@ router.get("/ping", (req, res) => {
   res.status(200).json({ result: "pong" })
 })
 
-app.use("/dashboard", dashboardRoute)
+// app.use("/dashboard", dashboardRoute)
 
 async function init() {
   try {

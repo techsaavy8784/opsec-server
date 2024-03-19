@@ -1,9 +1,9 @@
-const { http, createPublicClient } = require("viem")
-const { mainnet } = require("viem/chains")
-const abi = require("../utils/abi.json")
+import { http, createPublicClient } from "viem"
+import { mainnet, sepolia } from "viem/chains"
+import abi from "../utils/abi.json" assert { type: "json" }
 
 export const publicClient = createPublicClient({
-  chain: mainnet,
+  chain: process.env.NODE_ENV === "production" ? mainnet : sepolia,
   transport: http(),
 })
 
@@ -45,4 +45,4 @@ const listenStake = async () => {
   }, 5000)
 }
 
-module.exports = listenStake
+export default listenStake
