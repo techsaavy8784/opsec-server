@@ -46,9 +46,17 @@ const listenStake = async () => {
       const logs = await publicClient.getFilterLogs({ filter })
 
       for (const log of logs) {
-        console.log(`Stake event: ${stakeId}`)
+        const stakeId = log.args.stakeId
+        const stakeIdStr = stakeId
+          .slice(2)
+          .match(/.{1,2}/g)
+          .map((i) => String.fromCharCode(parseInt(i, 16)))
+          .join("")
+        console.log(`Stake event: ${stakeId}, ${stakeIdStr}`)
+
         fetch(`${process.env.OPSEC_DAPP_URL}/api/staking/complete`, {
-          body: JSON.stringify({ stakeId: log.args.stakeId }),
+          body: JSON.stringify({ stakeId: stakeIdStr }),
+          method: "POST",
           headers: {
             "X-API-KEY": process.env.STAKE_WEBHOOK_KEY,
           },
