@@ -4,6 +4,7 @@ import abi from "../utils/abi.json" assert { type: "json" }
 
 export const publicClient = createPublicClient({
   chain: process.env.NODE_ENV === "production" ? mainnet : sepolia,
+  cacheTime: 0,
   transport: http(),
 })
 
@@ -12,14 +13,23 @@ const BLOCK_INTERVAL = 3
 const listenStake = async () => {
   let lastBlockNumber = await publicClient.getBlockNumber()
 
+  console.log(`start: ${lastBlockNumber}`)
+
   setInterval(async () => {
-    const blockNumber = await publicClient.getBlockNumber()
+    const blockNumber = Number(await publicClient.getBlockNumber())
 
     if (blockNumber - BLOCK_INTERVAL < lastBlockNumber) {
+      console.log(`skipping ${blockNumber}`)
       return
     }
 
     lastBlockNumber = blockNumber
+
+    console.log(
+      `block number: from ${
+        blockNumber - BLOCK_INTERVAL + 1
+      } to ${lastBlockNumber}`
+    )
 
     const filter = await publicClient.createContractEventFilter({
       abi,
