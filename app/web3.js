@@ -47,15 +47,11 @@ const listenStake = async () => {
 
       for (const log of logs) {
         const stakeId = log.args.stakeId
-        const stakeIdStr = stakeId
-          .slice(2)
-          .match(/.{1,2}/g)
-          .map((i) => String.fromCharCode(parseInt(i, 16)))
-          .join("")
-        console.log(`Stake event: ${stakeId}, ${stakeIdStr}`)
+
+        console.log(`Stake event: ${stakeId}`)
 
         fetch(`${process.env.OPSEC_DAPP_URL}/api/staking/complete`, {
-          body: JSON.stringify({ stakeId: stakeIdStr }),
+          body: JSON.stringify({ stakeId }),
           method: "POST",
           headers: {
             "X-API-KEY": process.env.STAKE_WEBHOOK_KEY,
