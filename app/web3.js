@@ -17,43 +17,47 @@ const listenStake = async () => {
   console.log(`start: ${lastBlockNumber}`)
 
   setInterval(async () => {
-    const blockNumber = Number(await publicClient.getBlockNumber())
+    try {
+      const blockNumber = Number(await publicClient.getBlockNumber())
 
-    console.log(`block number: ${blockNumber}`)
+      console.log(`block number: ${blockNumber}`)
 
-    if (blockNumber - BLOCK_INTERVAL < lastBlockNumber) {
-      console.log(`skipping ${blockNumber}`)
-      return
-    }
+      if (blockNumber - BLOCK_INTERVAL < lastBlockNumber) {
+        console.log(`skipping ${blockNumber}`)
+        return
+      }
 
-    lastBlockNumber = blockNumber
+      lastBlockNumber = blockNumber
 
-    console.log(
-      `block number: from ${
-        blockNumber - BLOCK_INTERVAL + 1
-      } to ${lastBlockNumber}`
-    )
-
-    const filter = await publicClient.createContractEventFilter({
-      abi,
-      address: process.env.STAKE_CONTRACT,
-      eventName: "Staked",
-      fromBlock: blockNumber - BLOCK_INTERVAL + 1,
-      toBlock: blockNumber,
-    })
-
-    const logs = await publicClient.getFilterLogs({ filter })
-
-    for (const log of logs) {
-      console.log(`Stake event: ${stakeId}`)
-      fetch(`${process.env.OPSEC_DAPP_URL}/api/staking/complete`, {
-        body: JSON.stringify({ stakeId: log.args.stakeId }),
-        headers: {
-          "X-API-KEY": process.env.STAKE_WEBHOOK_KEY,
-        },
-      }).then((res) =>
-        console.log(`Stake complete status: ${stakeId}, ${res.status}`)
+      console.log(
+        `block number: from ${
+          blockNumber - BLOCK_INTERVAL + 1
+        } to ${lastBlockNumber}`
       )
+
+      const filter = await publicClient.createContractEventFilter({
+        abi,
+        address: process.env.STAKE_CONTRACT,
+        eventName: "Staked",
+        fromBlock: blockNumber - BLOCK_INTERVAL + 1,
+        toBlock: blockNumber,
+      })
+
+      const logs = await publicClient.getFilterLogs({ filter })
+
+      for (const log of logs) {
+        console.log(`Stake event: ${stakeId}`)
+        fetch(`${process.env.OPSEC_DAPP_URL}/api/staking/complete`, {
+          body: JSON.stringify({ stakeId: log.args.stakeId }),
+          headers: {
+            "X-API-KEY": process.env.STAKE_WEBHOOK_KEY,
+          },
+        }).then((res) =>
+          console.log(`Stake complete status: ${stakeId}, ${res.status}`)
+        )
+      }
+    } catch (e) {
+      console.error(`error: ${JSON.stringify(e)}`)
     }
   }, 5000)
 }
