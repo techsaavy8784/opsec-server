@@ -66,4 +66,4 @@ const listenStake = async () => {
   }, 5000)
 }
 
-export default listenStake
+listenStake()

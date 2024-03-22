@@ -4,7 +4,8 @@
   "type": "module",
   "scripts": {
     "installer": "node app/node-installer.js",
-    "server": "node app/server.js"
+    "server": "node app/server.js",
+    "web3": "node app/web3.js"
   },
   "dependencies": {
     "bcrypt": "^5.1.1",

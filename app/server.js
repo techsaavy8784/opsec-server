@@ -3,7 +3,6 @@ dotenv.config()
 import express from "express"
 import bodyParser from "body-parser"
 import cors from "cors"
-import listenStake from "./web3.js"
 
 const app = express()
 
@@ -51,5 +50,3 @@ async function init() {
 }
 
 init()
-
-listenStake()
