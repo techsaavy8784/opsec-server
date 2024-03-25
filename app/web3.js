@@ -69,6 +69,7 @@ const listenStake = async () => {
       }
 
       lastBlockNumber = blockNumber + 1
+      console.log(`last block number: ${lastBlockNumber}`)
       fs.writeFileSync(SAVE_FILE_PATH, String(lastBlockNumber))
     } catch (e) {
       console.error(`error: ${JSON.stringify(e)}`)
