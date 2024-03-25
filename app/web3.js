@@ -1,4 +1,7 @@
+import fs from "node:fs"
+import path from "node:path"
 import dotenv from "dotenv"
+
 dotenv.config()
 
 import { http, createPublicClient } from "viem"
@@ -11,8 +14,18 @@ export const publicClient = createPublicClient({
 
 const BLOCK_INTERVAL = 3
 
+const SAVE_FILE_PATH = path.join(process.env.HOME, ".opsec")
+
 const listenStake = async () => {
-  let lastBlockNumber = await publicClient.getBlockNumber()
+  let lastBlockNumber = 0
+
+  if (fs.existsSync(SAVE_FILE_PATH)) {
+    lastBlockNumber = Number(fs.readFileSync(SAVE_FILE_PATH))
+  }
+
+  if (lastBlockNumber === 0) {
+    lastBlockNumber = await publicClient.getBlockNumber()
+  }
 
   console.log(`start: ${lastBlockNumber}`)
 
@@ -27,19 +40,13 @@ const listenStake = async () => {
         return
       }
 
-      lastBlockNumber = blockNumber
-
-      console.log(
-        `block number: from ${
-          blockNumber - BLOCK_INTERVAL + 1
-        } to ${lastBlockNumber}`
-      )
+      console.log(`block number: from ${lastBlockNumber} to ${blockNumber}`)
 
       const filter = await publicClient.createContractEventFilter({
         abi,
         address: process.env.STAKE_CONTRACT,
         eventName: "Staked",
-        fromBlock: blockNumber - BLOCK_INTERVAL + 1,
+        fromBlock: lastBlockNumber,
         toBlock: blockNumber,
       })
 
@@ -60,6 +67,10 @@ const listenStake = async () => {
           console.log(`Stake complete status: ${stakeId}, ${res.status}`)
         )
       }
+
+      lastBlockNumber = blockNumber
+
+      fs.writeFileSync(SAVE_FILE_PATH, lastBlockNumber)
     } catch (e) {
       console.error(`error: ${JSON.stringify(e)}`)
     }
