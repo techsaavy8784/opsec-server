@@ -3,6 +3,7 @@ dotenv.config()
 import express from "express"
 import bodyParser from "body-parser"
 import cors from "cors"
+import claimRoute from "../route/claim.js"
 
 const app = express()
 
@@ -25,7 +26,7 @@ router.get("/ping", (req, res) => {
   res.status(200).json({ result: "pong" })
 })
 
-// app.use("/dashboard", dashboardRoute)
+app.use("/claim", claimRoute)
 
 async function init() {
   try {

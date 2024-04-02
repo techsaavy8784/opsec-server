@@ -8,6 +8,7 @@
     "web3": "node app/web3.js"
   },
   "dependencies": {
+    "@covalenthq/client-sdk": "^0.9.8",
     "bcrypt": "^5.1.1",
     "body-parser": "^1.20.2",
     "cors": "^2.8.5",
