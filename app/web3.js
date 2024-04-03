@@ -45,7 +45,6 @@ const listenStake = async () => {
       const filter = await publicClient.createContractEventFilter({
         abi,
         address: process.env.STAKE_CONTRACT,
-        eventName: "Staked",
         fromBlock: lastBlockNumber,
         toBlock: blockNumber,
       })
@@ -53,19 +52,33 @@ const listenStake = async () => {
       const logs = await publicClient.getFilterLogs({ filter })
 
       for (const log of logs) {
-        const stakeId = log.args.stakeId
+        const { stakeId, address } = log.args
 
-        console.log(`Stake event: ${stakeId}`)
+        if (log.eventName === "Staked") {
+          console.log(`Stake event: ${stakeId}`)
 
-        fetch(`${process.env.OPSEC_DAPP_URL}/api/staking/complete`, {
-          body: JSON.stringify({ stakeId }),
-          method: "POST",
-          headers: {
-            "X-API-KEY": process.env.STAKE_WEBHOOK_KEY,
-          },
-        }).then((res) =>
-          console.log(`Stake complete status: ${stakeId}, ${res.status}`)
-        )
+          fetch(`${process.env.OPSEC_DAPP_URL}/api/staking/add`, {
+            body: JSON.stringify({ stakeId, address }),
+            method: "POST",
+            headers: {
+              "X-API-KEY": process.env.STAKE_WEBHOOK_KEY,
+            },
+          }).then((res) =>
+            console.log(`Stake add status: ${stakeId}, ${res.status}`)
+          )
+        } else if (log.eventName === "Extended") {
+          console.log(`Extend event: ${stakeId}`)
+
+          fetch(`${process.env.OPSEC_DAPP_URL}/api/staking/extend`, {
+            body: JSON.stringify({ stakeId }),
+            method: "POST",
+            headers: {
+              "X-API-KEY": process.env.STAKE_WEBHOOK_KEY,
+            },
+          }).then((res) =>
+            console.log(`Stake extend status: ${stakeId}, ${res.status}`)
+          )
+        }
       }
 
       lastBlockNumber = blockNumber + 1
