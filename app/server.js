@@ -26,8 +26,6 @@ router.get("/ping", (req, res) => {
   res.status(200).json({ result: "pong" })
 })
 
-app.use("/claim", claimRoute)
-
 async function init() {
   try {
     console.log("Initializing...")
