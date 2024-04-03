@@ -1,6 +1,7 @@
 import fs from "node:fs"
 import path from "node:path"
 import dotenv from "dotenv"
+import ClaimController from "../controller/claim"
 
 dotenv.config()
 
@@ -75,6 +76,44 @@ const listenStake = async () => {
       console.error(`error: ${JSON.stringify(e)}`)
     }
   }, 5000)
+}
+
+const listenClamim = ()  => {
+  let addressParam = []
+  let amountParam = []
+  fetch(`${process.env.OPSEC_DAPP_URL}/api/claim/all`, {
+    body: JSON.stringify({ stakeId }),
+    method: "GET",
+    headers: {
+      "X-API-KEY": process.env.STAKE_WEBHOOK_KEY,
+    },
+  }).then(async (res) =>{
+      console.log(`claim datas: ${res.data}`);
+      res.data.map((item, id) => {
+        if(!ClaimController.restrict_check(item.address))
+          return;
+        addressParam.push(item.address)
+        amountParam.push(item.amount)
+        fetch(`${process.env.OPSEC_DAPP_URL}/api/claim/update`, {
+          body: JSON.stringify({ userId: item.user_id }),
+          method: "POST",
+          headers: {
+            "X-API-KEY": process.env.STAKE_WEBHOOK_KEY,
+          },
+        })
+        return;
+      })
+      await publicClient.createContractEventFilter({
+        abi,
+        address: process.env.STAKE_CONTRACT,
+        eventName: "Claim",
+        args: {  
+          address: addressParam,
+          amount: amountParam
+        }
+      })
+    }
+  )
 }
 
 listenStake()
