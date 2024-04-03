@@ -52,13 +52,13 @@ const listenStake = async () => {
       const logs = await publicClient.getFilterLogs({ filter })
 
       for (const log of logs) {
-        const { stakeId, address } = log.args
+        const { stakeId, user } = log.args
 
         if (log.eventName === "Staked") {
-          console.log(`Stake event: ${stakeId}`)
+          console.log(`Stake event: ${stakeId}, ${user}`)
 
           fetch(`${process.env.OPSEC_DAPP_URL}/api/staking/add`, {
-            body: JSON.stringify({ stakeId, address }),
+            body: JSON.stringify({ stakeId, address: user }),
             method: "POST",
             headers: {
               "X-API-KEY": process.env.STAKE_WEBHOOK_KEY,
