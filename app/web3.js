@@ -89,19 +89,18 @@ const listenClaim = ()  => {
       "X-API-KEY": process.env.STAKE_WEBHOOK_KEY,
     },
   }).then(async (res) =>{
-      console.log(`claim datas: ${res.data}`);
+      console.log(`claim datas: ${res.data}`)
+
       res.data.map(async (item, id) => {
+        userIdParam.push(item.user_id)
         if(!ClaimController.restrict_check(item.address))
           return;
         addressParam.push(item.address)
         amountParam.push(item.amount)
-        userIdParam.push(item.user_id)
-        
         return;
       })
 
       try {
-
         await publicClient.createContractEventFilter({
           abi,
           address: process.env.STAKE_CONTRACT,
