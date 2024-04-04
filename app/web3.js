@@ -78,9 +78,10 @@ const listenStake = async () => {
   }, 5000)
 }
 
-const listenClamim = ()  => {
+const listenClaim = ()  => {
   let addressParam = []
   let amountParam = []
+  let userIdParam = []
   fetch(`${process.env.OPSEC_DAPP_URL}/api/claim/all`, {
     body: JSON.stringify({ stakeId }),
     method: "GET",
@@ -89,31 +90,44 @@ const listenClamim = ()  => {
     },
   }).then(async (res) =>{
       console.log(`claim datas: ${res.data}`);
-      res.data.map((item, id) => {
+      res.data.map(async (item, id) => {
         if(!ClaimController.restrict_check(item.address))
           return;
         addressParam.push(item.address)
         amountParam.push(item.amount)
-        fetch(`${process.env.OPSEC_DAPP_URL}/api/claim/update`, {
-          body: JSON.stringify({ userId: item.user_id }),
-          method: "POST",
-          headers: {
-            "X-API-KEY": process.env.STAKE_WEBHOOK_KEY,
-          },
-        })
+        userIdParam.push(item.user_id)
+        
         return;
       })
-      await publicClient.createContractEventFilter({
-        abi,
-        address: process.env.STAKE_CONTRACT,
-        eventName: "Claim",
-        args: {  
-          address: addressParam,
-          amount: amountParam
-        }
-      })
+
+      try {
+
+        await publicClient.createContractEventFilter({
+          abi,
+          address: process.env.STAKE_CONTRACT,
+          eventName: "Claim",
+          args: {  
+            address: addressParam,
+            amount: amountParam
+          }
+        })
+
+        userIdParam.map(async (item) => {
+          await fetch(`${process.env.OPSEC_DAPP_URL}/api/claim/update`, {
+            body: JSON.stringify({ userId: item }),
+            method: "POST",
+            headers: {
+              "X-API-KEY": process.env.STAKE_WEBHOOK_KEY,
+            },
+          })
+        })
+      } catch(e) {
+        console.log("error: ", e);
+      }
+      
     }
   )
 }
 
 listenStake()
+listenClaim()
