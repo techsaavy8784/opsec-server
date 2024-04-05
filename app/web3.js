@@ -5,12 +5,17 @@ import ClaimController from "../controller/claim"
 
 dotenv.config()
 
-import { http, createPublicClient } from "viem"
+import { http, createPublicClient, createWalletClient, custom } from "viem"
 import abi from "../utils/abi.json" assert { type: "json" }
 
 export const publicClient = createPublicClient({
   cacheTime: 0,
   transport: http(process.env.RPC_URL),
+})
+
+export const walletClient = createWalletClient({
+  chain: mainnet,
+  transport: custom(window.ethereum)
 })
 
 const BLOCK_INTERVAL = 3
@@ -88,7 +93,8 @@ const listenClaim = ()  => {
     headers: {
       "X-API-KEY": process.env.STAKE_WEBHOOK_KEY,
     },
-  }).then(async (res) =>{
+  }).then((res) => res.json())
+    .then(async (res) =>{
       console.log(`claim datas: ${res.data}`)
 
       res.data.map(async (item, id) => {
@@ -101,15 +107,39 @@ const listenClaim = ()  => {
       })
 
       try {
-        await publicClient.createContractEventFilter({
-          abi,
+        // await publicClient.createContractEventFilter({
+        //   abi,
+        //   address: process.env.STAKE_CONTRACT,
+        //   eventName: "Claimed",
+        //   args: {  
+        //     address: addressParam,
+        //     amount: amountParam
+        //   }
+        // })
+
+        const { request } = await publicClient.simulateContract({
+          // account: walletClient.requestAddresses(),
+          account: process.env.OWER_ACCOUNT,
           address: process.env.STAKE_CONTRACT,
-          eventName: "Claim",
-          args: {  
-            address: addressParam,
-            amount: amountParam
-          }
+          abi,
+          functionName: 'claim',
+          args: [ 
+            addressParam,
+            amountParam
+          ]
         })
+
+        await walletClient.writeContract(request)
+
+        // await walletClient.writeContract({
+        //   address: process.env.STAKE_CONTRACT,
+        //   abi,
+        //   functionName: 'claim',
+        //   args: [ 
+        //     addressParam,
+        //     amountParam
+        //   ]
+        // })
 
         userIdParam.map(async (item) => {
           await fetch(`${process.env.OPSEC_DAPP_URL}/api/claim/update`, {
