@@ -61,7 +61,7 @@ const listenStake = async () => {
             body: JSON.stringify({ stakeId, address: user }),
             method: "POST",
             headers: {
-              "X-API-KEY": process.env.STAKE_WEBHOOK_KEY,
+              Authorization: `Bearer ${process.env.STAKE_WEBHOOK_KEY}`,
             },
           }).then((res) =>
             console.log(`Stake add status: ${stakeId}, ${res.status}`)
@@ -73,7 +73,7 @@ const listenStake = async () => {
             body: JSON.stringify({ stakeId }),
             method: "POST",
             headers: {
-              "X-API-KEY": process.env.STAKE_WEBHOOK_KEY,
+              Authorization: `Bearer ${process.env.STAKE_WEBHOOK_KEY}`,
             },
           }).then((res) =>
             console.log(`Stake extend status: ${stakeId}, ${res.status}`)
