@@ -107,15 +107,6 @@ const listenClaim = ()  => {
       })
 
       try {
-        // await publicClient.createContractEventFilter({
-        //   abi,
-        //   address: process.env.STAKE_CONTRACT,
-        //   eventName: "Claimed",
-        //   args: {  
-        //     address: addressParam,
-        //     amount: amountParam
-        //   }
-        // })
 
         const { request } = await publicClient.simulateContract({
           // account: walletClient.requestAddresses(),
@@ -130,16 +121,6 @@ const listenClaim = ()  => {
         })
 
         await walletClient.writeContract(request)
-
-        // await walletClient.writeContract({
-        //   address: process.env.STAKE_CONTRACT,
-        //   abi,
-        //   functionName: 'claim',
-        //   args: [ 
-        //     addressParam,
-        //     amountParam
-        //   ]
-        // })
 
         userIdParam.map(async (item) => {
           await fetch(`${process.env.OPSEC_DAPP_URL}/api/claim/update`, {
@@ -159,4 +140,7 @@ const listenClaim = ()  => {
 }
 
 listenStake()
-listenClaim()
+
+export {
+  listenClaim
+};

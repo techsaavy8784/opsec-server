@@ -3,6 +3,8 @@ dotenv.config()
 import express from "express"
 import bodyParser from "body-parser"
 import cors from "cors"
+import nodeCron from "node-cron"
+import { listenClaim } from "./web3"
 
 const app = express()
 
@@ -24,6 +26,9 @@ const router = express.Router()
 router.get("/ping", (req, res) => {
   res.status(200).json({ result: "pong" })
 })
+
+const job = nodeCron.schedule('0 0 * * * *', listenClaim);
+job.start();
 
 async function init() {
   try {
