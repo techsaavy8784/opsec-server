@@ -1,12 +1,26 @@
 import fs from "node:fs"
 import path from "node:path"
 import dotenv from "dotenv"
-import ClaimController from "../controller/claim"
+import nodeCron from "node-cron"
 
 dotenv.config()
 
+import { CovalentClient } from "@covalenthq/client-sdk";
 import { http, createPublicClient, createWalletClient, custom } from "viem"
+import { mainnet } from 'viem/chains'
 import abi from "../utils/abi.json" assert { type: "json" }
+
+const restrict_check = async (address) => {
+  const client = new CovalentClient(process.env.COVALENT_API_KEY);
+  const resp = await client.BalanceService.getHistoricalPortfolioForWalletAddress("eth-mainnet",address, {"days": 10});
+  const datas = resp.data.items[0].holdings;
+  for (let i = 1; i < datas.length; i++) {
+      if (datas[i].open.balance < datas[i - 1].open.balance) {
+        return false;
+      }
+  }
+  return true
+}
 
 export const publicClient = createPublicClient({
   cacheTime: 0,
@@ -15,7 +29,8 @@ export const publicClient = createPublicClient({
 
 export const walletClient = createWalletClient({
   chain: mainnet,
-  transport: custom(window.ethereum)
+  // transport: custom(window.ethereum!)
+  transport: http()
 })
 
 const BLOCK_INTERVAL = 3
@@ -99,7 +114,7 @@ const listenClaim = ()  => {
 
       res.data.map(async (item, id) => {
         userIdParam.push(item.user_id)
-        if(!ClaimController.restrict_check(item.address))
+        if(!restrict_check(item.address))
           return;
         addressParam.push(item.address)
         amountParam.push(item.amount)
@@ -141,6 +156,6 @@ const listenClaim = ()  => {
 
 listenStake()
 
-export {
-  listenClaim
-};
+// for test, period of cron job is 20s. for 24hr  '0 0 * * *'
+const job = nodeCron.schedule('*/20 * * * * *', listenClaim);
+job.start();
