@@ -10,6 +10,8 @@ import { http, createPublicClient, createWalletClient, custom } from "viem"
 import { mainnet,sepolia } from 'viem/chains'
 import abi from "../utils/abi.json" assert { type: "json" }
 
+const selectedChain = process.env.NODE_ENV === 'production' ? mainnet : sepolia;
+
 const restrict_check = async (address) => {
   const client = new CovalentClient(process.env.COVALENT_API_KEY);
   const resp = await client.BalanceService.getHistoricalPortfolioForWalletAddress("eth-mainnet",address, {"days": 10});
@@ -28,7 +30,7 @@ export const publicClient = createPublicClient({
 })
 
 export const walletClient = createWalletClient({
-  chain: sepolia,
+  chain: selectedChain,
   // transport: custom(window.ethereum!)
   transport: http()
 })
