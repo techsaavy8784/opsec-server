@@ -1,31 +1,31 @@
-import dotenv from "dotenv"
-dotenv.config({ path: "../.env" })
+import dotenv from 'dotenv'
+dotenv.config({ path: '../.env' })
 
 // import fs from "fs"
-import { promises as fs } from "fs"
-import path from "path"
-import fetch from "node-fetch"
-import database from "../utils/db.js"
-import SSH from "../utils/ssh.js"
+import { promises as fs } from 'fs'
+import path from 'path'
+import fetch from 'node-fetch'
+import database from '../utils/db.js'
+import SSH from '../utils/ssh.js'
 
 const { CLIENT_ID, CLIENT_SECRET, API_USER, API_PASSWORD } = process.env
 
 const getAccessToken = async () => {
   const response = await fetch(
-    "https://auth.contabo.com/auth/realms/contabo/protocol/openid-connect/token",
+    'https://auth.contabo.com/auth/realms/contabo/protocol/openid-connect/token',
     {
-      method: "POST",
+      method: 'POST',
       headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
+        'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: new URLSearchParams({
         client_id: CLIENT_ID,
         client_secret: CLIENT_SECRET,
         username: API_USER,
         password: API_PASSWORD,
-        grant_type: "password",
+        grant_type: 'password',
       }),
-    }
+    },
   )
 
   const data = await response.json()
@@ -34,10 +34,10 @@ const getAccessToken = async () => {
 
 const fetchInstancesPage = async (accessToken, pageUrl) => {
   const response = await fetch(pageUrl, {
-    method: "GET",
+    method: 'GET',
     headers: {
       Authorization: `Bearer ${accessToken}`,
-      "x-request-id": "51A87ECD-754E-4104-9C54-D01AD0F83406",
+      'x-request-id': '51A87ECD-754E-4104-9C54-D01AD0F83406',
     },
   })
 
@@ -47,16 +47,16 @@ const fetchInstancesPage = async (accessToken, pageUrl) => {
 const getAllInstances = async () => {
   const accessToken = await getAccessToken()
   const queryParams = new URLSearchParams({
-    ipConfig: "true",
-    size: "100",
-    orderBy: "name:asc",
+    ipConfig: 'true',
+    size: '100',
+    orderBy: 'name:asc',
   }).toString()
 
   let currentPageUrl = `https://api.contabo.com/v1/compute/instances?${queryParams}`
   const allInstances = []
 
   do {
-    console.log("Fetching page:", currentPageUrl)
+    console.log('Fetching page:', currentPageUrl)
     const pageData = await fetchInstancesPage(accessToken, currentPageUrl)
     pageData.data.forEach((instance) => {
       const { name, instanceId, createdDate, sshKeys, ipConfig } = instance
@@ -70,7 +70,7 @@ const getAllInstances = async () => {
     })
 
     currentPageUrl = pageData._links.next
-      ? new URL(pageData._links.next, "https://api.contabo.com").href
+      ? new URL(pageData._links.next, 'https://api.contabo.com').href
       : null
   } while (currentPageUrl)
 
@@ -81,20 +81,20 @@ async function displayInstances() {
   try {
     const instances = await getAllInstances()
 
-    await fs.writeFile("./instances.json", JSON.stringify(instances, null, 2))
+    await fs.writeFile('./instances.json', JSON.stringify(instances, null, 2))
     // console.log()
   } catch (error) {
-    console.error("Error fetching Contabo API:", error)
+    console.error('Error fetching Contabo API:', error)
   }
 }
 
 async function fetchAllServers() {
-  const fetchQuery = "SELECT * FROM servers"
+  const fetchQuery = 'SELECT * FROM servers'
   try {
     const { rows } = await database.query(fetchQuery)
     return rows // Return all server rows
   } catch (err) {
-    console.error("Error fetching servers from database:", err)
+    console.error('Error fetching servers from database:', err)
     throw err
   }
 }
@@ -104,32 +104,32 @@ async function checkServers(filePath) {
     const servers = await fetchAllServers() // Fetch all servers from the database
     const serverHosts = servers.map((server) => server.host) // Create an array of all hosts from the servers
 
-    const data = await fs.readFile(filePath, "utf8") // Read the file asynchronously
+    const data = await fs.readFile(filePath, 'utf8') // Read the file asynchronously
     const instances = JSON.parse(data)
 
     // Filter instances to find matches
     const matchingInstances = instances.filter((instance) =>
-      serverHosts.includes(instance.host)
+      serverHosts.includes(instance.host),
     )
 
     // Find new instances that are not in the database
     const newInstances = instances.filter(
-      (instance) => !serverHosts.includes(instance.host)
+      (instance) => !serverHosts.includes(instance.host),
     )
 
     // Log counts
-    console.log("Count of Matching Instances:", matchingInstances.length)
-    console.log("Count of New Instances:", newInstances.length)
+    console.log('Count of Matching Instances:', matchingInstances.length)
+    console.log('Count of New Instances:', newInstances.length)
 
     // Generate servers.json with new instances
     if (newInstances.length > 0) {
-      await fs.writeFile("servers.json", JSON.stringify(newInstances, null, 2))
-      console.log("servers.json has been created with new instances.")
+      await fs.writeFile('servers.json', JSON.stringify(newInstances, null, 2))
+      console.log('servers.json has been created with new instances.')
     }
 
     return { matchingInstances, newInstances } // Return both arrays for further processing if needed
   } catch (err) {
-    console.error("Error checking servers:", err)
+    console.error('Error checking servers:', err)
     throw err
   }
 }
@@ -141,37 +141,37 @@ async function addServer({ host, password }) {
   `
 
   // return database.query(insertQuery, [host, 22, "root", password, true])
-  return database.query(insertQuery, [host, 22, "root", password, false])
+  return database.query(insertQuery, [host, 22, 'root', password, false])
 }
 
 async function processServers(filePath) {
   const absolutePath = path.resolve(filePath)
-  console.log("Processing servers from:", absolutePath)
+  console.log('Processing servers from:', absolutePath)
 
   try {
-    const data = await fs.readFile(absolutePath, "utf8")
-    const lines = data.split("\n")
+    const data = await fs.readFile(absolutePath, 'utf8')
+    const lines = data.split('\n')
     for (const line of lines) {
       if (!line.trim()) continue
 
-      const [host, password] = line.split(",").map((part) => part.trim())
+      const [host, password] = line.split(',').map((part) => part.trim())
       await addServer({ host, password })
       console.log(`Server added for ${host}`)
     }
-    console.log("All servers have been processed.")
+    console.log('All servers have been processed.')
   } catch (error) {
-    if (error.code === "ENOENT") {
-      console.error("File not found:", absolutePath)
+    if (error.code === 'ENOENT') {
+      console.error('File not found:', absolutePath)
     } else {
-      console.error("Failed to process servers:", error)
+      console.error('Failed to process servers:', error)
     }
   }
 }
 
 function generateRandomPassword(length = 12) {
   const charset =
-    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+"
-  let password = ""
+    'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+'
+  let password = ''
   for (let i = 0; i < length; i++) {
     const randomIndex = Math.floor(Math.random() * charset.length)
     password += charset[randomIndex]
@@ -180,11 +180,11 @@ function generateRandomPassword(length = 12) {
 }
 
 async function changePasswords(filePath, logFilePath) {
-  const errorLogPath = "./passwords_error.log"
+  const errorLogPath = './passwords_error.log'
 
-  fs.readFile(filePath, "utf8", async (err, data) => {
+  fs.readFile(filePath, 'utf8', async (err, data) => {
     if (err) {
-      console.error("Error reading the JSON file:", err)
+      console.error('Error reading the JSON file:', err)
       return
     }
     try {
@@ -196,19 +196,19 @@ async function changePasswords(filePath, logFilePath) {
           server.host,
           server.port.toString(),
           server.username,
-          server.password
+          server.password,
         )
 
         try {
           await sshClient.connect()
           await sshClient.executeCommand(
-            `echo '${server.username}:${newPassword}' | chpasswd`
+            `echo '${server.username}:${newPassword}' | chpasswd`,
           )
           console.log(`Password changed for ${server.host}`)
 
           await fs.appendFileSync(
             logFilePath,
-            `${server.host},${newPassword}\n`
+            `${server.host},${newPassword}\n`,
           )
 
           await sshClient.disconnect()
@@ -216,14 +216,14 @@ async function changePasswords(filePath, logFilePath) {
           console.error(`Failed to change password for ${server.host}:`, error)
           await fs.appendFileSync(
             errorLogPath,
-            `Host: ${server.host}, Error: ${error}\n`
+            `Host: ${server.host}, Error: ${error}\n`,
           )
         }
       }
 
-      console.log("All servers have been processed for password change.")
+      console.log('All servers have been processed for password change.')
     } catch (error) {
-      console.error("Failed to parse servers from JSON:", error)
+      console.error('Failed to parse servers from JSON:', error)
     }
   })
 }
@@ -232,28 +232,28 @@ async function findPasswords(
   filePath,
   passwords,
   logFilePath,
-  passwordLimit = 30
+  passwordLimit = 30,
 ) {
-  const errorLogPath = "./passwords_error.log"
+  const errorLogPath = './passwords_error.log'
   const passwordUsage = passwords.reduce(
     (acc, pwd) => ({ ...acc, [pwd]: 0 }),
-    {}
+    {},
   )
 
   try {
-    const data = await fs.readFile(filePath, "utf8")
+    const data = await fs.readFile(filePath, 'utf8')
     const servers = JSON.parse(data)
 
-    const old_data = await fs.readFile("./passwords.log", "utf8")
+    const old_data = await fs.readFile('./passwords.log', 'utf8')
     // passwords.log is a csv file with host and password
-    const old_servers = old_data.split("\n").map((line) => line.split(",")[0])
+    const old_servers = old_data.split('\n').map((line) => line.split(',')[0])
     // console.log("Old passwords:", old_servers)
 
     for (const server of servers) {
       let passwordChanged = false
 
       if (old_servers.includes(server.host)) {
-        console.log("Password already changed for", server.host)
+        console.log('Password already changed for', server.host)
         continue
       }
 
@@ -299,52 +299,52 @@ async function findPasswords(
 
       if (!passwordChanged) {
         console.error(
-          `Failed to change password for ${server.host}: All provided passwords failed or limits reached.`
+          `Failed to change password for ${server.host}: All provided passwords failed or limits reached.`,
         )
         await fs.appendFile(errorLogPath, `${server.host}\n`)
       }
     }
 
-    console.log("All servers have been processed for password change.")
+    console.log('All servers have been processed for password change.')
   } catch (error) {
     console.error(
-      "Error processing the JSON file or changing passwords:",
-      error
+      'Error processing the JSON file or changing passwords:',
+      error,
     )
   }
 }
 
 const potential_passwords = [
-  "MagNate4mar1AWXQX991234",
-  "MagNate4mar2AWXQX991234",
-  "MagNate4mar3AWXQX991234",
-  "MagNate4mar4AWXQX991234",
-  "MagNate4mar5AWXQX991234",
-  "MagNate4mar6AWXQX991234",
-  "MagNate4mar7AWXQX991234",
-  "MagNate4mar8AWXQX991234",
-  "MagNate4mar9AWXQX991234",
-  "MagNate4mar10AWXQX991234",
-  "MagNate4mar11AWXQX991234",
-  "MagNate4mar12AWXQX998812",
-  "MagNate4mar13AWXQX998812",
-  "MagNate4mar14AWXQX998812",
-  "MagNate4mar15AWXQX998812",
-  "MagNate4mar16AWXQX998812",
-  "MagNate4mar17AWXQX998812",
-  "MagNate4mar18AWXQX998812ZZWE",
-  "MagNate4mar19AWXQX998812ZZWE",
-  "MagNate4mar20AWXQX997812ZZWE",
-  "MagNate4mar21AWXQX997812ZZWE",
-  "MagNate4mar22AghdXQX997812ZZWE",
-  "MagNate4mar23AghdXQX997812ZZWE",
-  "MagNate4mar24AghdXQX997812ZZWE",
-  "MagNate4mar25AghdXQX997812ZZWE",
-  "MagNate4mar26BghdXQX997812ZZWE",
-  "MagNate4mar27BghdXQX997812ZZWE",
-  "MagNate4mar28BghdXQX997812ZZWE",
-  "MagNate4mar29BghdXQX997812ZZWE",
-  "MagNate4mar30WghdXQX997812ZZWE",
+  'MagNate4mar1AWXQX991234',
+  'MagNate4mar2AWXQX991234',
+  'MagNate4mar3AWXQX991234',
+  'MagNate4mar4AWXQX991234',
+  'MagNate4mar5AWXQX991234',
+  'MagNate4mar6AWXQX991234',
+  'MagNate4mar7AWXQX991234',
+  'MagNate4mar8AWXQX991234',
+  'MagNate4mar9AWXQX991234',
+  'MagNate4mar10AWXQX991234',
+  'MagNate4mar11AWXQX991234',
+  'MagNate4mar12AWXQX998812',
+  'MagNate4mar13AWXQX998812',
+  'MagNate4mar14AWXQX998812',
+  'MagNate4mar15AWXQX998812',
+  'MagNate4mar16AWXQX998812',
+  'MagNate4mar17AWXQX998812',
+  'MagNate4mar18AWXQX998812ZZWE',
+  'MagNate4mar19AWXQX998812ZZWE',
+  'MagNate4mar20AWXQX997812ZZWE',
+  'MagNate4mar21AWXQX997812ZZWE',
+  'MagNate4mar22AghdXQX997812ZZWE',
+  'MagNate4mar23AghdXQX997812ZZWE',
+  'MagNate4mar24AghdXQX997812ZZWE',
+  'MagNate4mar25AghdXQX997812ZZWE',
+  'MagNate4mar26BghdXQX997812ZZWE',
+  'MagNate4mar27BghdXQX997812ZZWE',
+  'MagNate4mar28BghdXQX997812ZZWE',
+  'MagNate4mar29BghdXQX997812ZZWE',
+  'MagNate4mar30WghdXQX997812ZZWE',
 ]
 
 async function checkServers2() {
@@ -352,22 +352,22 @@ async function checkServers2() {
     const servers = await fetchAllServers() // Fetch all servers from the database
     const serverHosts = servers.map((server) => server.host) // Create an array of all hosts from the servers
 
-    const data = await fs.readFile("./passwords_error.log", "utf8") // Read the file asynchronously
-    const instances = data.split("\n").map((line) => line.trim())
+    const data = await fs.readFile('./passwords_error.log', 'utf8') // Read the file asynchronously
+    const instances = data.split('\n').map((line) => line.trim())
 
     // Filter instances to find matches
     const matchingInstances = instances.filter((instance) =>
-      serverHosts.includes(instance.host)
+      serverHosts.includes(instance.host),
     )
 
     // Find new instances that are not in the database
     const newInstances = instances.filter(
-      (instance) => !serverHosts.includes(instance.host)
+      (instance) => !serverHosts.includes(instance.host),
     )
 
     // Log counts
-    console.log("Count of Matching Instances:", matchingInstances.length)
-    console.log("Count of New Instances:", newInstances.length)
+    console.log('Count of Matching Instances:', matchingInstances.length)
+    console.log('Count of New Instances:', newInstances.length)
 
     // // Generate servers.json with new instances
     // if (newInstances.length > 0) {
@@ -377,7 +377,7 @@ async function checkServers2() {
 
     return { matchingInstances, newInstances } // Return both arrays for further processing if needed
   } catch (err) {
-    console.error("Error checking servers:", err)
+    console.error('Error checking servers:', err)
     throw err
   }
 }
@@ -411,6 +411,6 @@ async function checkServers2() {
 // creates servers.json
 // checkServers("./instances.json")
 
-await processServers("./passwords.log")
+await processServers('./passwords.log')
 
 // changePasswords("./servers.json", "./passwords.log")

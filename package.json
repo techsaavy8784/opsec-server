@@ -5,7 +5,10 @@
   "scripts": {
     "installer": "node app/node-installer.js",
     "server": "node app/server.js",
-    "web3": "node app/web3.js"
+    "web3": "node app/web3.js",
+    "lint": "eslint .",
+    "lint:fix": "eslint --fix .",
+    "format": "prettier --write ."
   },
   "dependencies": {
     "@covalenthq/client-sdk": "^0.9.8",
@@ -22,5 +25,12 @@
     "pg": "^8.11.3",
     "ssh2": "^1.15.0",
     "viem": "^2.8.13"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.1.1",
+    "eslint": "^9.1.1",
+    "eslint-plugin-prettier": "^5.1.3",
+    "globals": "^15.1.0",
+    "prettier": "^3.2.5"
   }
 }

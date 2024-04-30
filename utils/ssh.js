@@ -1,6 +1,6 @@
-import { Client } from "ssh2"
-import fs from "fs"
-import path from "path"
+import { Client } from 'ssh2'
+import fs from 'fs'
+import path from 'path'
 
 class ssh {
   constructor(host, port, username, password) {
@@ -22,18 +22,18 @@ class ssh {
       const connectionTimeout = setTimeout(() => {
         if (!isConnectionReady) {
           this.conn.end() // End the connection attempt
-          reject(new Error("SSH connection timeout"))
+          reject(new Error('SSH connection timeout'))
         }
       }, timeout)
 
       this.conn
-        .on("ready", () => {
+        .on('ready', () => {
           clearTimeout(connectionTimeout) // Clear the timeout as the connection is successfully established
           isConnectionReady = true
-          console.log("SSH Client Ready")
+          console.log('SSH Client Ready')
           resolve()
         })
-        .on("error", (err) => {
+        .on('error', (err) => {
           clearTimeout(connectionTimeout) // Clear the timeout in case of an error
           reject(err)
         })
@@ -47,20 +47,20 @@ class ssh {
       this.conn.exec(command, (err, stream) => {
         if (err) return reject(err)
 
-        let data = ""
+        let data = ''
 
-        stream.on("data", (chunk) => {
+        stream.on('data', (chunk) => {
           process.stdout.write(chunk.toString()) // Stream stdout in real-time
           data += chunk // Accumulate output for final result
         })
 
-        stream.stderr.on("data", (chunk) => {
+        stream.stderr.on('data', (chunk) => {
           process.stderr.write(chunk.toString()) // Stream stderr in real-time
           data += chunk // Optionally accumulate stderr too
         })
 
         if (!detach) {
-          stream.on("close", (code, signal) => {
+          stream.on('close', (code, signal) => {
             if (code === 0) {
               resolve(data) // Resolve with all output after command completion
             } else {
@@ -70,7 +70,7 @@ class ssh {
         } else {
           // In detached mode, resolve immediately without waiting for command completion
           resolve(
-            "Command executed in detached mode, output may not be complete."
+            'Command executed in detached mode, output may not be complete.',
           )
         }
       })
@@ -78,9 +78,9 @@ class ssh {
   }
 
   checkFileExists(filename, isDirectory = false) {
-    const testFlag = isDirectory ? "-d" : "-f"
+    const testFlag = isDirectory ? '-d' : '-f'
     return this.executeCommand(
-      `test ${testFlag} ${filename} && echo exists || echo no`
+      `test ${testFlag} ${filename} && echo exists || echo no`,
     )
   }
 
@@ -113,7 +113,7 @@ class ssh {
   }
 
   getHomeDirectory() {
-    return this.executeCommand("echo $HOME")
+    return this.executeCommand('echo $HOME')
   }
 
   writeFile(remotePath, text) {
@@ -126,7 +126,7 @@ class ssh {
       console.log(`Attempting to transfer file to ${remotePath}`)
       this.conn.sftp((err, sftp) => {
         if (err) {
-          console.error("Failed to initiate SFTP session:", err)
+          console.error('Failed to initiate SFTP session:', err)
           return reject(err)
         }
 
@@ -135,7 +135,7 @@ class ssh {
           if (err) {
             console.error(
               `Local file does not exist or is not accessible: ${localPath}`,
-              err
+              err,
             )
             return reject(err)
           }
