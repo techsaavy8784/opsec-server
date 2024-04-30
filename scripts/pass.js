@@ -1,6 +1,6 @@
-import bcrypt from "bcrypt"
+import bcrypt from 'bcrypt'
 
-const password = "%F)UsiS)AynL"
+const password = '%F)UsiS)AynL'
 
 const saltRounds = 10 // default
 

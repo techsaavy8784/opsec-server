@@ -1,19 +1,19 @@
-import dotenv from "dotenv"
-import path from "path"
-import { fileURLToPath } from "url"
-import fs from "fs"
-import database from "../utils/db.js"
-import ssh from "../utils/ssh.js"
+import dotenv from 'dotenv'
+import path from 'path'
+import { fileURLToPath } from 'url'
+import fs from 'fs'
+import database from '../utils/db.js'
+import ssh from '../utils/ssh.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
 // console.log(path.join(__dirname, "..", ".env"))
 
-dotenv.config({ path: path.join(__dirname, "..", ".env") })
+dotenv.config({ path: path.join(__dirname, '..', '.env') })
 
 async function stopAndRemoveNonNodeContainers(remote) {
-  console.log("Fetching all Docker containers...")
+  console.log('Fetching all Docker containers...')
 
   // Get all Docker container names
   const listContainersCmd = `docker ps --format '{{.Names}}'`
@@ -21,14 +21,14 @@ async function stopAndRemoveNonNodeContainers(remote) {
 
   // Split the output by new lines to get an array of container names
   const containerNames = allContainerNames
-    .split("\n")
-    .filter((name) => name.trim() !== "")
+    .split('\n')
+    .filter((name) => name.trim() !== '')
 
-  console.log(`Found containers: ${containerNames.join(", ")}`)
+  console.log(`Found containers: ${containerNames.join(', ')}`)
 
   for (const name of containerNames) {
     // Check if the container name does not include '-node'
-    if (!name.includes("-node")) {
+    if (!name.includes('-node')) {
       console.log(`Stopping and removing container: ${name}`)
 
       // Stop the Docker container
@@ -41,21 +41,21 @@ async function stopAndRemoveNonNodeContainers(remote) {
     }
   }
 
-  console.log("Processing complete.")
+  console.log('Processing complete.')
 }
 
 async function deleteBlockchainDirectory(remote, blockchainPath) {
   try {
     // Attempt to delete the blockchain directory
     await remote.deleteDirectory(blockchainPath)
-    console.log("Deleted existing blockchain folder")
+    console.log('Deleted existing blockchain folder')
   } catch (error) {
     console.error(`Failed to delete directory: ${error.message}`)
 
     // If deletion fails, find Docker containers using the directory
     const dockerContainerName = await findDockerContainerUsingDirectory(
       remote,
-      blockchainPath
+      blockchainPath,
     )
     if (dockerContainerName) {
       // Stop and remove the Docker container
@@ -70,16 +70,16 @@ async function deleteBlockchainDirectory(remote, blockchainPath) {
       try {
         await remote.deleteDirectory(blockchainPath)
         console.log(
-          "Successfully deleted the blockchain folder after stopping Docker container."
+          'Successfully deleted the blockchain folder after stopping Docker container.',
         )
       } catch (retryError) {
         console.error(
-          `Failed to delete directory after stopping container: ${retryError.message}`
+          `Failed to delete directory after stopping container: ${retryError.message}`,
         )
       }
     } else {
       console.error(
-        "No Docker container found using the directory, or unable to determine."
+        'No Docker container found using the directory, or unable to determine.',
       )
     }
   }
@@ -94,14 +94,14 @@ async function findDockerContainerUsingDirectory(remote, directoryPath) {
 }
 
 async function processNode(node) {
-  console.log("Processing node:", node.id)
-  console.log("Blockchain:", node.blockchain_name)
+  console.log('Processing node:', node.id)
+  console.log('Blockchain:', node.blockchain_name)
 
   console.log(`Connecting to server - ${node.host}:${node.port}...`)
   const remote = new ssh(node.host, node.port, node.username, node.password)
   try {
     await remote.connect()
-    console.log("Connected to server")
+    console.log('Connected to server')
 
     // set directories and files
     const currentPath = process.cwd()
@@ -109,12 +109,12 @@ async function processNode(node) {
     const remotePath = homeDir.trim()
     const blockchainNameFormatted = node.blockchain_name
       .toLowerCase()
-      .replace(/\s+/g, "-")
+      .replace(/\s+/g, '-')
     const blockchainPath = `${remotePath}/${blockchainNameFormatted}`
-    const prepareScript = path.join(currentPath, "configs/default/prepare.sh")
+    const prepareScript = path.join(currentPath, 'configs/default/prepare.sh')
     const blockchainFolder = path.join(
       currentPath,
-      `configs/${node.blockchain_name}`.toLocaleLowerCase()
+      `configs/${node.blockchain_name}`.toLocaleLowerCase(),
     )
 
     // console.log("prepareScript:", prepareScript)
@@ -122,37 +122,37 @@ async function processNode(node) {
     // console.log("remotePath:", remotePath)
 
     // update node status
-    await updateNodeStatus(node.id, "INSTALLING")
+    await updateNodeStatus(node.id, 'INSTALLING')
 
     // check if server is initialized
-    console.log("Checking if server is initialized...")
+    console.log('Checking if server is initialized...')
     const exists = await remote.checkFileExists(`${remotePath}/.initialized`)
-    const initialized = exists.trim() == "exists"
-    console.log("Server initialized:", initialized)
+    const initialized = exists.trim() == 'exists'
+    console.log('Server initialized:', initialized)
 
     // if (!initialized) {
-    console.log("Server not initialized. Preparing...")
+    console.log('Server not initialized. Preparing...')
     await remote.scpFile(prepareScript, `${remotePath}/prepare.sh`)
-    console.log("Copied prepare.sh to server")
+    console.log('Copied prepare.sh to server')
 
-    await remote.changePermissions(`${remotePath}/prepare.sh`, "+x")
-    console.log("Changed permissions for prepare.sh")
+    await remote.changePermissions(`${remotePath}/prepare.sh`, '+x')
+    console.log('Changed permissions for prepare.sh')
 
-    console.log("Executing prepare.sh")
+    console.log('Executing prepare.sh')
     await remote.executeCommand(`${remotePath}/prepare.sh`)
 
-    console.log("Server initialized")
+    console.log('Server initialized')
     // }
 
     // Check if blockchain folder exists
-    console.log("Checking if blockchain exists...")
+    console.log('Checking if blockchain exists...')
     const blockchainExists = await remote.checkFileExists(blockchainPath, true)
-    const blockchainFolderExists = blockchainExists.trim() == "exists"
-    console.log("Blockchain exists: ", blockchainFolderExists)
+    const blockchainFolderExists = blockchainExists.trim() == 'exists'
+    console.log('Blockchain exists: ', blockchainFolderExists)
 
     if (blockchainFolderExists) {
       console.log(
-        `Blockchain folder already exists for ${node.blockchain_name}`
+        `Blockchain folder already exists for ${node.blockchain_name}`,
       )
 
       // await stopAndRemoveNonNodeContainers(remote)
@@ -175,7 +175,7 @@ async function processNode(node) {
         console.log(`Docker container ${dockerContainerName} removed.`)
       } else {
         console.log(
-          `No such container: ${dockerContainerName}, skipping stop and remove.`
+          `No such container: ${dockerContainerName}, skipping stop and remove.`,
         )
       }
 
@@ -190,41 +190,41 @@ async function processNode(node) {
     await remote.createDirectory(blockchainPath)
 
     await remote.scpDirectory(blockchainFolder, blockchainPath)
-    console.log("Copied blockchain configs to server")
+    console.log('Copied blockchain configs to server')
 
     await remote.moveFile(`${blockchainPath}/.config`, `${blockchainPath}/.env`)
 
-    console.log("Installing blockchain...")
+    console.log('Installing blockchain...')
 
     await remote.changeDirectory(blockchainPath)
 
-    await remote.changePermissions(`${blockchainPath}/install.sh`, "+x")
-    await remote.changePermissions(`${blockchainPath}/run.sh`, "+x")
+    await remote.changePermissions(`${blockchainPath}/install.sh`, '+x')
+    await remote.changePermissions(`${blockchainPath}/run.sh`, '+x')
 
     await remote.executeCommand(`cd ${blockchainPath} && ./install.sh`)
 
-    console.log("Blockchain installed")
+    console.log('Blockchain installed')
 
     // check if blockchain has wallet
     if (node.blockchain_wallet) {
-      console.log("Blockchain has wallet. Creating wallet...")
+      console.log('Blockchain has wallet. Creating wallet...')
       await remote.writeFile(`${blockchainPath}/.wallet`, node.wallet)
-      console.log("Wallet created")
+      console.log('Wallet created')
     }
 
-    console.log("Starting blockchain...")
+    console.log('Starting blockchain...')
     await remote.executeCommand(`cd ${blockchainPath} && ./run.sh`, true) // TODO: change to true after testing
 
-    console.log("Started blockchain...")
+    console.log('Started blockchain...')
 
     // update node status
-    await updateNodeStatus(node.id, "LIVE")
+    await updateNodeStatus(node.id, 'LIVE')
 
     remote.disconnect()
   } catch (error) {
-    console.error("SSH operation failed:", error)
+    console.error('SSH operation failed:', error)
     remote.disconnect()
-    await updateNodeStatus(node.id, "FAILED")
+    await updateNodeStatus(node.id, 'FAILED')
   }
 }
 
@@ -267,15 +267,15 @@ async function processNodes() {
 
     if (rows.length > 0) {
       console.log(
-        `Found ${rows.length} node reqest(s). Processing concurrently...`
+        `Found ${rows.length} node reqest(s). Processing concurrently...`,
       )
 
       await Promise.all(rows.map((node) => processNode(node)))
     } else {
-      console.log("Waiting for requests...")
+      console.log('Waiting for requests...')
     }
   } catch (error) {
-    console.error("Error fetching nodes:", error)
+    console.error('Error fetching nodes:', error)
   } finally {
     // await pool.end();
   }
@@ -287,5 +287,5 @@ function scheduleCheck() {
   })
 }
 
-console.log("Starting node processing...")
+console.log('Starting node processing...')
 scheduleCheck()
