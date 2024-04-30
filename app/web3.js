@@ -13,13 +13,13 @@ import abi from '../utils/abi.json' assert { type: 'json' }
 
 const selectedChain = process.env.NODE_ENV === 'production' ? mainnet : sepolia
 
-/*
-  check if restriction for requesting reflection claim
-  @param address
-
-  this function check if user sold user's opsec token within 10 days.
-*/
-const restrictCheck = async (address) => {
+/**
+ * @description
+ *    check if restriction for requesting reflection claim
+ *    - if the address has not sell any $OPSEC during the last 10 days
+ * @param address
+ */
+const checkClaimEligibility = async (address) => {
   const client = new CovalentClient(process.env.COVALENT_API_KEY)
   const resp =
     await client.BalanceService.getHistoricalPortfolioForWalletAddress(
@@ -139,7 +139,7 @@ const batchClaim = () => {
 
     res.rows.forEach(async (item) => {
       userIdParam.push(item.user_id)
-      if (restrictCheck(item.address)) {
+      if (checkClaimEligibility(item.address)) {
         addressParam.push(item.address)
         amountParam.push(item.amount)
       }
