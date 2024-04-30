@@ -7,18 +7,24 @@ import database from "../utils/db.js"
 dotenv.config()
 
 import { CovalentClient } from "@covalenthq/client-sdk";
-import { http, createPublicClient, createWalletClient, custom } from "viem"
+import { http, createPublicClient, createWalletClient } from "viem"
 import { mainnet,sepolia } from 'viem/chains'
 import abi from "../utils/abi.json" assert { type: "json" }
 
 const selectedChain = process.env.NODE_ENV === 'production' ? mainnet : sepolia;
 
+/*
+  check if restriction for requesting reflection claim
+  @param address
+
+  this function check if user sold user's opsec token within 10 days.
+*/
 const restrict_check = async (address) => {
   const client = new CovalentClient(process.env.COVALENT_API_KEY);
   const resp = await client.BalanceService.getHistoricalPortfolioForWalletAddress("eth-mainnet",address, {"days": 10});
-  const datas = resp.data.items[0].holdings;
-  for (let i = 1; i < datas.length; i++) {
-      if (datas[i].open.balance < datas[i - 1].open.balance) {
+  const data = resp.data.items[0].holdings;
+  for (let i = 1; i < data.length; i++) {
+      if (data[i].open.balance < data[i - 1].open.balance) {
         return false;
       }
   }
@@ -32,8 +38,7 @@ export const publicClient = createPublicClient({
 
 export const walletClient = createWalletClient({
   chain: selectedChain,
-  // transport: custom(window.ethereum!)
-  transport: http()
+  transport: http(process.env.RPC_URL)
 })
 
 const BLOCK_INTERVAL = 3
@@ -117,9 +122,9 @@ const listenStake = async () => {
 
 
 const batchClaim = ()  => {
-  let addressParam = []
-  let amountParam = []
-  let userIdParam = []
+  const addressParam = []
+  const amountParam = []
+  const userIdParam = []
 
   const sqlQuery = `
       SELECT
@@ -130,19 +135,18 @@ const batchClaim = ()  => {
     .then(async (res) =>{
       console.log(`claim datas: ${res.rows}`)
 
-      res.rows.map(async (item) => {
+      res.rows.forEach(async (item) => {
         userIdParam.push(item.user_id)
-        if(!restrict_check(item.address))
-          return;
-        addressParam.push(item.address)
-        amountParam.push(item.amount)
-        return;
+        if(restrict_check(item.address)){
+          addressParam.push(item.address)
+          amountParam.push(item.amount)
+        }
       })
 
       try {
 
         const { request } = await publicClient.simulateContract({
-          account: process.env.OWER_ACCOUNT,
+          account: process.env.OWNER_ACCOUNT,
           address: process.env.STAKE_CONTRACT,
           abi,
           functionName: 'claim',
@@ -154,15 +158,16 @@ const batchClaim = ()  => {
 
         await walletClient.writeContract(request)
 
-        userIdParam.map(async (item) => {
-          const sqlDeleteQuery = `
-              DELETE
-              FROM claims
-              WHERE user_id = ${item}
-              ;
-            `
-          await database.query(sqlDeleteQuery)
-        })
+        const userIds = userIdParam.join(','); // Convert array to comma-separated string
+
+        const sqlDeleteQuery = `
+            DELETE
+            FROM claims
+            WHERE user_id IN ($1)
+            ;`;
+        const values = [userIds]
+        await database.query(sqlDeleteQuery, values);
+
       } catch(e) {
         console.log("error: ", e);
       }
