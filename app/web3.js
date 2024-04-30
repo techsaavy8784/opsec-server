@@ -2,6 +2,7 @@ import fs from "node:fs"
 import path from "node:path"
 import dotenv from "dotenv"
 import nodeCron from "node-cron"
+import database from "../utils/db.js"
 
 dotenv.config()
 
@@ -120,16 +121,16 @@ const batchClaim = ()  => {
   let amountParam = []
   let userIdParam = []
 
-  fetch(`${process.env.OPSEC_DAPP_URL}/api/claim/all`, {
-    method: "GET",
-    headers: {
-      "X-API-KEY": process.env.STAKE_WEBHOOK_KEY,
-    },
-  }).then((res) => res.json())
+  const sqlQuery = `
+      SELECT
+        *
+      FROM claims;
+    `
+  database.query(sqlQuery)
     .then(async (res) =>{
-      console.log(`claim datas: ${res.data}`)
+      console.log(`claim datas: ${res.rows}`)
 
-      res.data.map(async (item) => {
+      res.rows.map(async (item) => {
         userIdParam.push(item.user_id)
         if(!restrict_check(item.address))
           return;
@@ -154,13 +155,13 @@ const batchClaim = ()  => {
         await walletClient.writeContract(request)
 
         userIdParam.map(async (item) => {
-          await fetch(`${process.env.OPSEC_DAPP_URL}/api/claim/update`, {
-            body: JSON.stringify({ userId: item }),
-            method: "POST",
-            headers: {
-              "X-API-KEY": process.env.STAKE_WEBHOOK_KEY,
-            },
-          })
+          const sqlDeleteQuery = `
+              DELETE
+              FROM claims
+              WHERE user_id = ${item}
+              ;
+            `
+          await database.query(sqlDeleteQuery)
         })
       } catch(e) {
         console.log("error: ", e);
@@ -169,7 +170,7 @@ const batchClaim = ()  => {
   )
 }
 
-// listenStake()
+listenStake()
 
 // // for test, period of cron job is 20s '*/60 * * * * *' . for 24hr  '0 0 * * *'
 const job = nodeCron.schedule('0 0 * * *', batchClaim);
