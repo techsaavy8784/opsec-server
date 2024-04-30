@@ -19,7 +19,7 @@ const selectedChain = process.env.NODE_ENV === 'production' ? mainnet : sepolia
 
   this function check if user sold user's opsec token within 10 days.
 */
-const restrict_check = async (address) => {
+const restrictCheck = async (address) => {
   const client = new CovalentClient(process.env.COVALENT_API_KEY)
   const resp =
     await client.BalanceService.getHistoricalPortfolioForWalletAddress(
@@ -139,7 +139,7 @@ const batchClaim = () => {
 
     res.rows.forEach(async (item) => {
       userIdParam.push(item.user_id)
-      if (restrict_check(item.address)) {
+      if (restrictCheck(item.address)) {
         addressParam.push(item.address)
         amountParam.push(item.amount)
       }
