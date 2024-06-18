@@ -75,12 +75,14 @@ const listenStake = async () => {
       }
 
       console.log(`block number: from ${lastBlockNumber} to ${blockNumber}`)
+      let fromBlockHex = '0x' + parseInt(lastBlockNumber).toString(16)
+      let toBlockHex = '0x' + parseInt(blockNumber).toString(16)
 
       const filter = await publicClient.createContractEventFilter({
         abi,
         address: process.env.STAKE_CONTRACT,
-        fromBlock: lastBlockNumber,
-        toBlock: blockNumber,
+        fromBlock: fromBlockHex,
+        toBlock: toBlockHex,
       })
 
       const logs = await publicClient.getFilterLogs({ filter })
